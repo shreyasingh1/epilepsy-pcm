@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='epilepsypcm',
     version='0.0.0',
-    packages=['pcm', 'pcm.loading'],
+    packages=['epilepsypcm', 'epilepsypcm.loading'],
     url='',
     license='',
     author='shrey2',
