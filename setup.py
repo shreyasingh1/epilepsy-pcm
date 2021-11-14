@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='epilepsypcm',
-    version='',
-    packages=['pcm', 'pcm.loading'],
+    version='0.0.0',
+    packages=['epilepsypcm', 'epilepsypcm.loading'],
     url='',
     license='',
     author='shrey2',
