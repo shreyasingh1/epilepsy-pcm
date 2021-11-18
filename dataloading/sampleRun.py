@@ -10,10 +10,9 @@ import json
 from statistics import mean
 import os
 import glob
-import pandas as pd
 from epilepsypcm.loading.imports import respInfoToAdjacencyMatrix, zToAdjacencyMatrix, getPeakLatency
 
-base_path = '/Users/richardlee/Desktop/2021 Fall/Precision Care Medicine/Coding/PY16N008'
+base_path = '/Users/richardlee/Desktop/2021 Fall/Precision Care Medicine/Coding/PY16N008' #change according to file path
 response_path = base_path + '/ResponseInfo/CCEP'
 z_path = base_path + '/z-scores'
 
