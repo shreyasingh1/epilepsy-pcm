@@ -4,5 +4,5 @@ Repo for PCM team 7, working on identifying epileptogenic zone (EZ) and predicti
 
 ## Setup instructions
 1) git clone the repo
-2) ```cd``` into new ```epilepypcm``` directory
+2) ```cd``` into new ```epilepsypcm``` directory
 3) do ```python -m pip install -e .``` to install the epilepsypcm repo
