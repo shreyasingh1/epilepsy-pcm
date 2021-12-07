@@ -187,3 +187,57 @@ def concat_dfs(base_path, engel, balance = None):
         full_df = pd.concat([df_majority_downsampled, df_minority])
 
     return full_df
+
+
+# Function that upsamples or downsamples a training set to balance classes
+# INPUT:
+# X_train = output from train_test_split function
+# y_train = output from train_test_split function
+# balance = "upsample", or "downsample"
+#          will upsample minority class or downsample majority class to balance
+#           the data
+# OUTPUT:
+# X_train = new balanced X training data
+# y_train = new balanced y training data
+
+from sklearn.utils import resample
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+
+def class_balance(X_train, y_train, balance):
+    full_df = pd.concat([X_train, y_train], axis = 1)
+
+    # seperate dataframes for class
+    df_majority = full_df[full_df.outcome == 0]
+    df_minority = full_df[full_df.outcome == 1]
+
+    # upsample data if balance parameter is set to "Upsample" or "upsample"
+    if (balance == "upsample") | (balance == "Upsample"):
+        # Upsample minority class
+        df_minority_upsampled = resample(df_minority,
+                                        replace=True,  # sample with replacement
+                                        n_samples=full_df["outcome"].value_counts()[0.0],
+                                        # to match majority class
+                                        random_state=123)  # reproducible results
+
+
+        # combine dataframes
+        full_df = pd.concat([df_majority, df_minority_upsampled])
+
+    # downsample data if balance parameter is set to "downsample" or "Downsample"
+    elif (balance == "downsample") | (balance == "Downsample"):
+        # downsample majority class
+        # downsample majority class
+        df_majority_downsampled = resample(df_majority,
+                                        replace=False,  # sample without replacement
+                                        n_samples= full_df["outcome"].value_counts()[1.0],
+                                        # to match minority class
+                                        random_state=123)  # reproducible results
+
+
+        full_df = pd.concat([df_majority_downsampled, df_minority])
+
+    X_train = full_df.drop(columns = ["outcome"])
+    y_train = full_df["outcome"]
+    
+    return X_train, y_train
