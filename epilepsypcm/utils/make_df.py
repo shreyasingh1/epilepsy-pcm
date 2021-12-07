@@ -189,9 +189,6 @@ def concat_dfs(base_path, engel, balance = None):
     return full_df
 
 
-def hello():
-    print("Hi)
-
 # Function that upsamples or downsamples a training set to balance classes
 # INPUT:
 # X_train = output from train_test_split function
