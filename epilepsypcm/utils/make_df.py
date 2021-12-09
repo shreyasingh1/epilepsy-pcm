@@ -201,8 +201,9 @@ def concat_dfs(base_path, engel, balance = None):
 # y_train = new balanced y training data
 
 from sklearn.utils import resample
+# from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
 
 def class_balance(X_train, y_train, balance):
     full_df = pd.concat([X_train, y_train], axis = 1)
