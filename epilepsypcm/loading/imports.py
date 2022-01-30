@@ -37,6 +37,7 @@ def respInfoToAdjacencyMatrix(files, peaks, threshold):
     responseChs = [];
     peakScores = [];
     stimChs = [];
+    chNames = [];
 
     for k in files:
         chNames = []
