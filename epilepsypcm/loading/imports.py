@@ -14,9 +14,25 @@ from statistics import mean
 # @args full_list
 # @args search_term, list of terms to index for
 # @returns a list of overlap indexes, and [-1] if no overlap
-def overlapIdx(full_list, search_term):
-    idx = [i for i,val in enumerate(full_list) if val==search_term]
-    return idx
+def getIndxOfOverlap(full_list, search_term):
+    toReturn = []
+    count = full_list.count(search_term)
+
+    # for i in range(count):
+    try:
+        indx = full_list.index(search_term)
+        toReturn.append(indx)
+    except:
+        x = 1
+
+    for i in range(count - 1):
+        indx = toReturn[i]
+        toReturn.append(indx + 1)
+
+    if len(toReturn) > 0:
+        return toReturn
+    else:
+        return [-1]
 
 ### Function to produce respInfo to adjacency matrix
 
@@ -37,7 +53,6 @@ def respInfoToAdjacencyMatrix(files, peaks, threshold):
     responseChs = [];
     peakScores = [];
     stimChs = [];
-    chNames = [];
 
     for k in files:
         chNames = []
@@ -69,33 +84,35 @@ def respInfoToAdjacencyMatrix(files, peaks, threshold):
     allStimInds = [];
     nodeLabels = chNames;
     nodeLabels.sort()
+    stimChs.sort()
 
     A = np.zeros((len(chNames), len(chNames)));
     # loop over each stimulation block
     for i in range(len(stimChs)):
-        
-        stimInds = overlapIdx(nodeLabels, stimChs[i])
-        allStimInds.append(stimInds);
-        respInd = overlapIdx(nodeLabels, responseChs[i])
-        
-        if not respInd: #if respInd is empty, continue
+        stimInds = getIndxOfOverlap(nodeLabels, stimChs[i])
+        if stimInds != [-1]:
+            allStimInds.append(stimInds);
+
+        respInd = getIndxOfOverlap(nodeLabels, responseChs[i])
+
+        if len(respInd) == 1 & respInd[0] == 0:  # if no responses, continue
             continue
 
         # get indicies of all responses that were stimulated in this block
-        ind = overlapIdx(stimChs, stimChs[i])
+        ind = getIndxOfOverlap(stimChs, stimChs[i])
 
         # loop over each response and store the zscore in the right spot in the adjacency matrix
         for r in range(len(respInd)):
-            r1 = overlapIdx([responseChs[i] for i in ind], nodeLabels[respInd[r]])[0]
+            r1 = getIndxOfOverlap([responseChs[i] for i in ind], nodeLabels[respInd[r]])[0]
 
-            if not stimInds:
-                #A[stimInds, respInd[r]] = peakScores[ind[r1[-1]]];
+            if len(stimInds) < 1:
+                A[stimInds, respInd[r]] = peakScores[ind[r1[len(r1) - 1]]];
                 continue
 
-            if (A[stimInds[-1], respInd[r]] > 0) & (peakScores[ind[r1]] > 0):
-                A[stimInds[-1], respInd[r]] = mean([A[stimInds[-1], respInd[r]][0], peakScores[ind[r1]]])
-            elif (A[stimInds[-1], respInd[r]] == 0) & (peakScores[ind[r1]] > 0):
-                A[stimInds[-1], respInd[r]] = peakScores[ind[r1]]
+            if (A[stimInds, respInd[r]] > 0) & (peakScores[ind[r1]] > 0):
+                A[stimInds, respInd[r]] = mean([A[stimInds, respInd[r]][0], peakScores[ind[r1]]])
+            elif (A[stimInds, respInd[r]] == 0) & (peakScores[ind[r1]] > 0):
+                A[stimInds, respInd[r]] = peakScores[ind[r1]]
 
     allStimIndsUQ = []
     for i in allStimInds:
@@ -103,9 +120,10 @@ def respInfoToAdjacencyMatrix(files, peaks, threshold):
             allStimIndsUQ.append(i[0])
     allStimIndsUQ = (set(allStimIndsUQ));  # only get the unique stimulated pairs
 
-    A = A - np.diag(np.diag(A))  # make sure there is no activity on the diagonal
+    A = A - np.diag(A)  # make sure there is no activity on the diagonal
 
     return A, nodeLabels, allStimIndsUQ, chNames
+
 
 ### Function for z-score files to adjacency matrix
 
