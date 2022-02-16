@@ -125,26 +125,7 @@ def get_df_list(base_path, engel):
 
     return positive_dataframes
 
-<<<<<<< HEAD
 def concat_dfs(base_path, engel):
-=======
-# Function that combines dataframes for all patients of a particular
-# engel class
-# INPUT:
-# base_path = string, file location to base folder that contains all patient folders
-# engel_score = string, target engel score to get dataframe for (ex. "1")
-#               can currently only handle "1" and "2"
-# balance (OPTIONAL, default = None) = "None", "upsample", or "downsample"
-#          will upsample minority class or downsample majority class to balance
-#           the data
-# OUTPUT:
-# all_positive_patients = a concatonated dataframe of all patients
-
-from sklearn.utils import resample
-
-def concat_dfs(base_path, engel, balance = None):
-
->>>>>>> 5ad91339764fdefc4bf8a416860cb607531e5a49
     patient_files = os.listdir(base_path)
 
     full_df = pd.DataFrame()
@@ -160,90 +141,4 @@ def concat_dfs(base_path, engel, balance = None):
                     df = make_df(patient, response_files_path)
                     full_df = pd.concat([full_df, df])
 
-<<<<<<< HEAD
     return full_df
-=======
-    # seperate dataframes for class
-    df_majority = full_df[full_df.outcome == 0]
-    df_minority = full_df[full_df.outcome == 1]
-
-    # upsample data if balance parameter is set to "Upsample" or "upsample"
-    if (balance == "upsample") | (balance == "Upsample"):
-        # Upsample minority class
-        df_minority_upsampled = resample(df_minority,
-                                         replace=True,  # sample with replacement
-                                         n_samples=full_df["outcome"].value_counts()[0.0],
-                                         # to match majority class
-                                         random_state=123)  # reproducible results
-
-
-        # combine dataframes
-        full_df = pd.concat([df_majority, df_minority_upsampled])
-
-    # downsample data if balance parameter is set to "downsample" or "Downsample"
-    elif (balance == "downsample") | (balance == "Downsample"):
-        # downsample majority class
-        # downsample majority class
-        df_majority_downsampled = resample(df_majority,
-                                           replace=False,  # sample without replacement
-                                           n_samples= full_df["outcome"].value_counts()[1.0],
-                                           # to match minority class
-                                           random_state=123)  # reproducible results
-
-
-        full_df = pd.concat([df_majority_downsampled, df_minority])
-
-    return full_df
-
-
-# Function that upsamples or downsamples a training set to balance classes
-# INPUT:
-# X_train = output from train_test_split function
-# y_train = output from train_test_split function
-# balance = "upsample", or "downsample"
-#          will upsample minority class or downsample majority class to balance
-#           the data
-# OUTPUT:
-# X_train = new balanced X training data
-# y_train = new balanced y training data
-
-from sklearn.utils import resample
-
-def class_balance(X_train, y_train, balance):
-    full_df = pd.concat([X_train, y_train], axis = 1)
-
-    # seperate dataframes for class
-    df_majority = full_df[full_df.outcome == 0]
-    df_minority = full_df[full_df.outcome == 1]
-
-    # upsample data if balance parameter is set to "Upsample" or "upsample"
-    if (balance == "upsample") | (balance == "Upsample"):
-        # Upsample minority class
-        df_minority_upsampled = resample(df_minority,
-                                        replace=True,  # sample with replacement
-                                        n_samples=full_df["outcome"].value_counts()[0.0],
-                                        # to match majority class
-                                        random_state=123)  # reproducible results
-
-
-        # combine dataframes
-        full_df = pd.concat([df_majority, df_minority_upsampled])
-
-    # downsample data if balance parameter is set to "downsample" or "Downsample"
-    elif (balance == "downsample") | (balance == "Downsample"):
-        # downsample majority class
-        # downsample majority class
-        df_majority_downsampled = resample(df_majority,
-                                        replace=False,  # sample without replacement
-                                        n_samples= full_df["outcome"].value_counts()[1.0],
-                                        # to match minority class
-                                        random_state=123)  # reproducible results
-
-
-        full_df = pd.concat([df_majority_downsampled, df_minority])
-
-    X_train = full_df.drop(columns = ["outcome"])
-    y_train = full_df["outcome"]
-    
-    return X_train, y_train
->>>>>>> 5ad91339764fdefc4bf8a416860cb607531e5a49
