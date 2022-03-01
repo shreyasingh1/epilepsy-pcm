@@ -9,7 +9,7 @@ from sklearn import metrics
 
 from sklearn.model_selection import train_test_split
 
-from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
 
 from sklearn.naive_bayes import GaussianNB
 
@@ -25,18 +25,21 @@ from sklearn.svm import SVR
 # Get training and testing dataframes
 # INPUT
 # df = dataframe to split
+# X_cols = list of columsn to use as x values
 # test_size = float, size of test split, default = 0.25
 # OUTPUT
 # X_train, X_test, y_train, y_test = training and
 # testing dataframes
-def get_train_test(df, test_size=0.25):
+def get_train_test(df, X_cols, test_size=0.25):
 
     # taking absolute value of z-scores
-    df["n1Zscore"] = abs(df["n1Zscore"])
-    df["n2Zscore"] = abs(df["n2Zscore"])
-    df["p2Zscore"] = abs(df["p2Zscore"])
+    if "n1Zscore" in X_cols:
+        df["n1Zscore"] = abs(df["n1Zscore"])
+        df["n2Zscore"] = abs(df["n2Zscore"])
+        df["p2Zscore"] = abs(df["p2Zscore"])
 
-    X = df[["n1Zscore", "n2Zscore", "p2Zscore", "n1Latency", "n2Latency", "p2Latency"]]
+    #X = df[["n1Zscore", "n2Zscore", "p2Zscore", "n1Latency", "n2Latency", "p2Latency"]]
+    X = df[X_cols]
     y = df[["outcome"]]["outcome"]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0)
@@ -46,45 +49,63 @@ def get_train_test(df, test_size=0.25):
 # Linear regression model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # OUTPUT
 # lr = trained linear regression model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def linear_regression(df, plot_roc = False, plot_pr = False):
+def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
 
-    lr = linear_model.LinearRegression()
-    y_pred = lr.fit(X_train, y_train).predict(X_test)
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
+
+    lr = LogisticRegression()
+    y_pred = lr.fit(X_train, y_train).predict_proba(X_test)[:,1]
     y_rounded = np.array(pd.Series(y_pred).round())
-    print("Linear Regression - Number of mislabeled points out of a total %d points : %d" % (X_test.shape[0], (y_test != y_rounded).sum()))
+    print("Logistic Regression - Number of mislabeled points out of a total %d points : %d" % (X_test.shape[0], (y_test != y_rounded).sum()))
 
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return lr, tpr, fpr, precision, recall
+    return lr, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 # Naive Bayes model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # OUTPUT
 # gnb = trained gaussian naive bayes model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def naive_bayes(df, plot_roc = False, plot_pr = False):
+def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
 
     gnb = GaussianNB()
     y_pred = gnb.fit(X_train, y_train).predict_proba(X_test)[:, 1]
@@ -94,29 +115,38 @@ def naive_bayes(df, plot_roc = False, plot_pr = False):
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return gnb, tpr, fpr, precision, recall
+    return gnb, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 
 # Random Forest model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # max_depth = int, depth of random forest
 # OUTPUT
 # rf = trained random forest model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def random_forest(df, max_depth, plot_roc = False, plot_pr = False):
+def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
 
     rf = RandomForestClassifier(max_depth=max_depth, random_state=0)
     y_pred = rf.fit(X_train, y_train).predict_proba(X_test)[:, 1]
@@ -126,30 +156,39 @@ def random_forest(df, max_depth, plot_roc = False, plot_pr = False):
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return rf, tpr, fpr, precision, recall
+    return rf, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 # XGBoost model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # learning_rate = int, learning rate
 # max_depth = int, depth of forest
 # n_estimators = number of estimators
 # OUTPUT
 # xgb = trained xgboost model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def xgboost(df, learning_rate = 0.5, max_depth = 10, n_estimators = 10, plot_roc = False, plot_pr = False):
+def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
 
     xgb = XGBClassifier(learning_rate=learning_rate, max_depth=max_depth, n_estimators=n_estimators)
     y_pred = xgb.fit(X_train, y_train).predict_proba(X_test)[:, 1]
@@ -159,29 +198,38 @@ def xgboost(df, learning_rate = 0.5, max_depth = 10, n_estimators = 10, plot_roc
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return xgb, tpr, fpr, precision, recall
+    return xgb, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 
 # AdaBoost model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # n_estimators = number of estimators
 # OUTPUT
 # ada = trained adaboost model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def adaboost(df, n_estimators = 10, plot_roc = False, plot_pr = False):
+def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
 
     ada = AdaBoostClassifier(n_estimators=n_estimators, random_state=0)
     y_pred = ada.fit(X_train, y_train).predict_proba(X_test)[:, 1]
@@ -191,29 +239,38 @@ def adaboost(df, n_estimators = 10, plot_roc = False, plot_pr = False):
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return ada, tpr, fpr, precision, recall
+    return ada, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 
 # AdaBoost model
 # INPUT
 # df = dataframe
+# X_cols = x columns to train on
 # n_estimators = number of estimators
 # OUTPUT
 # sv = trained svm model
+# test_channels
+# y_pred
+# y_test
 # tpr
 # fpr
+# roc_thresholds
 # precision
 # recall
-def svm(df, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False):
+def svm(df, X_cols, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
 
     sv = SVR(C=C, epsilon=epsilon)
     y_pred = sv.fit(X_train, y_train).predict(X_test)
@@ -223,14 +280,14 @@ def svm(df, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False):
     if plot_roc:
         tpr, fpr = roc(y_test, y_pred)
     else:
-        fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
         precision, recall = pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
-    return sv, tpr, fpr, precision, recall
+    return sv, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
 
 
