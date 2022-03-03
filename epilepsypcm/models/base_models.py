@@ -21,16 +21,20 @@ from sklearn.ensemble import AdaBoostClassifier
 
 from sklearn.svm import SVR
 
+from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import RandomOverSampler
+
 
 # Get training and testing dataframes
 # INPUT
 # df = dataframe to split
 # X_cols = list of columsn to use as x values
 # test_size = float, size of test split, default = 0.25
+# SMOTE, true if u want train set upsampled and false if not
 # OUTPUT
 # X_train, X_test, y_train, y_test = training and
 # testing dataframes
-def get_train_test(df, X_cols, test_size=0.25):
+def get_train_test(df, X_cols, smote="no", test_size=0.25):
 
     # taking absolute value of z-scores
     if "n1Zscore" in X_cols:
@@ -42,7 +46,25 @@ def get_train_test(df, X_cols, test_size=0.25):
     X = df[X_cols]
     y = df[["outcome"]]["outcome"]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0, stratify = y)
+
+    if smote==True:
+        train = pd.concat([X_train, y_train], axis=1)
+        y = train['outcome']
+        oversample = SMOTE()
+        X_nochannel = train.drop(columns='Channels')
+        X_train, y_train = oversample.fit_resample(X_nochannel, y)
+        X_train["Channels"] = 0
+        X_train = X_train.drop(columns = "outcome")
+
+    if smote=="resample":
+        train = pd.concat([X_train, y_train], axis=1)
+        y = train['outcome']
+        X = train.drop(columns='outcome')
+        oversample = RandomOverSampler(sampling_strategy='minority')
+        X_train, y_train = oversample.fit_resample(X, y)
+        X_train["Channels"] = 0
+     #   X_train = X_train.drop(columns="outcome")
 
     return X_train, X_test, y_train, y_test
 
@@ -52,6 +74,7 @@ def get_train_test(df, X_cols, test_size=0.25):
 # X_cols = x columns to train on
 # OUTPUT
 # lr = trained linear regression model
+# Smote, true or false
 # test_channels
 # y_pred
 # y_test
@@ -60,9 +83,9 @@ def get_train_test(df, X_cols, test_size=0.25):
 # roc_thresholds
 # precision
 # recall
-def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False):
+def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
@@ -89,6 +112,7 @@ def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False):
 # INPUT
 # df = dataframe
 # X_cols = x columns to train on
+# smote, true or false
 # OUTPUT
 # gnb = trained gaussian naive bayes model
 # test_channels
@@ -99,9 +123,9 @@ def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False):
 # roc_thresholds
 # precision
 # recall
-def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False):
+def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
@@ -130,6 +154,7 @@ def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False):
 # df = dataframe
 # X_cols = x columns to train on
 # max_depth = int, depth of random forest
+# smote, true or false
 # OUTPUT
 # rf = trained random forest model
 # test_channels
@@ -140,9 +165,9 @@ def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False):
 # roc_thresholds
 # precision
 # recall
-def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False):
+def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
@@ -172,6 +197,7 @@ def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False):
 # learning_rate = int, learning rate
 # max_depth = int, depth of forest
 # n_estimators = number of estimators
+# smote, true or false
 # OUTPUT
 # xgb = trained xgboost model
 # test_channels
@@ -182,9 +208,9 @@ def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False):
 # roc_thresholds
 # precision
 # recall
-def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, plot_roc = False, plot_pr = False):
+def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
@@ -213,6 +239,7 @@ def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, 
 # df = dataframe
 # X_cols = x columns to train on
 # n_estimators = number of estimators
+# smote, true or false
 # OUTPUT
 # ada = trained adaboost model
 # test_channels
@@ -223,9 +250,9 @@ def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, 
 # roc_thresholds
 # precision
 # recall
-def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False):
+def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
@@ -254,6 +281,7 @@ def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False):
 # df = dataframe
 # X_cols = x columns to train on
 # n_estimators = number of estimators
+# smote, true or false
 # OUTPUT
 # sv = trained svm model
 # test_channels
@@ -264,9 +292,9 @@ def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False):
 # roc_thresholds
 # precision
 # recall
-def svm(df, X_cols, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False):
+def svm(df, X_cols, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False, smote = False):
 
-    X_train, X_test, y_train, y_test = get_train_test(df, X_cols)
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
 
     test_channels = list(X_test["Channels"])
     X_train = X_train.drop(columns="Channels")
