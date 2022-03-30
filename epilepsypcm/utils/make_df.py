@@ -79,7 +79,7 @@ def make_df(patient, paths):
         fileInfo = paths[i].split("_")
         stimCh1 = fileInfo[1];
         stimCh2 = fileInfo[2];
-        stimCh = stimCh1 + "_" + stimCh2
+        stimCh = stimCh1 + "_" + stimCh2Chats
         df = df.drop(df.loc[df["chNames"] == stimCh].index)
 
     # adding dataframe outcome values (1 if in SOZ, 0 if not)
@@ -89,7 +89,8 @@ def make_df(patient, paths):
         if seizure_onset_zone[patient] != "None":
             for node in seizure_onset_zone[patient]:
                 for channel in df["chNames"]:
-                    if node in channel:
+                    channel_split = channel.split("_")
+                    if (node == channel_split[0]) | (node == channel_split[1]):
                         df["outcome"][df["chNames"] == channel] = 1
 
     return df
