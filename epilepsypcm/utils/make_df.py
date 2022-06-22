@@ -18,6 +18,7 @@ def make_df(patient, paths):
         chNames = []
         # load info into python dictionary
         data = json.load(open(paths[i]))
+        p_name = i
 
         # Get list of channel names
         for key in data["time"]: chNames.append(key)
@@ -64,6 +65,7 @@ def make_df(patient, paths):
     df["n2Latency"] = n2Latency.flatten()
     df["p2Latency"] = p2Latency.flatten()
     df["flipped"] = flipped.flatten()
+    df["patient"] = p_name
 
     # Dropped rows for stimulating channels since they only
     # contain stimulating waveforms / artifacts / saturated signals
@@ -79,7 +81,7 @@ def make_df(patient, paths):
         fileInfo = paths[i].split("_")
         stimCh1 = fileInfo[1];
         stimCh2 = fileInfo[2];
-        stimCh = stimCh1 + "_" + stimCh2Chats
+        stimCh = stimCh1 + "_" + stimCh2
         df = df.drop(df.loc[df["chNames"] == stimCh].index)
 
     # adding dataframe outcome values (1 if in SOZ, 0 if not)
@@ -88,10 +90,24 @@ def make_df(patient, paths):
     if engel_score[patient] == "1":
         if seizure_onset_zone[patient] != "None":
             for node in seizure_onset_zone[patient]:
-                for channel in df["chNames"]:
+                for channel in df["chNames"]: # labeling
                     channel_split = channel.split("_")
-                    if (node == channel_split[0]) | (node == channel_split[1]):
+                    if (node == channel_split[0]) | (node == channel_split[1]): # checking channels are exactly equal, LA1 vs LA10
                         df["outcome"][df["chNames"] == channel] = 1
+                    elif ("1LL" in channel_split[0]) | ("1LL" in channel_split[1]): # 1LL vs ALL
+                        if "1LL" in channel_split[0]:
+                            channel_new = "A" + channel_split[0][1:]
+                        elif "1LL" in channel_split[1]:
+                            channel_new = "A" + channel_split[1][1:]
+                        if node == channel_new:
+                            df["outcome"][df["chNames"] == channel] = 1
+                    elif ("0" in channel_split[0][1:-1]) | ("0" in channel_split[1][1:-1]): # LA01 vs LA1
+                        if "0" in channel_split[0][1:-1]:
+                            channel_new = channel_split[0].replace("0", "")
+                        elif "0" in channel_split[1][1:-1]:
+                            channel_new = channel_split[1].replace("0", "")
+                        if node == channel_new:
+                            df["outcome"][df["chNames"] == channel] = 1
 
     return df
 

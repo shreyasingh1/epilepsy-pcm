@@ -94,15 +94,14 @@ def logistic_regression(df, X_cols, plot_roc = False, plot_pr = False, smote = F
     lr = LogisticRegression()
     y_pred = lr.fit(X_train, y_train).predict_proba(X_test)[:,1]
     y_rounded = np.array(pd.Series(y_pred).round())
-    print("Logistic Regression - Number of mislabeled points out of a total %d points : %d" % (X_test.shape[0], (y_test != y_rounded).sum()))
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -133,16 +132,14 @@ def naive_bayes(df, X_cols, plot_roc = False, plot_pr = False, smote = False):
 
     gnb = GaussianNB()
     y_pred = gnb.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-    print("Naive Bayes - Number of mislabeled points out of a total %d points : %d" % (
-    X_test.shape[0], (y_test != gnb.fit(X_train, y_train).predict(X_test)).sum()))
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -175,16 +172,14 @@ def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False, smot
 
     rf = RandomForestClassifier(max_depth=max_depth, random_state=0)
     y_pred = rf.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-    print("Random Forest - Number of mislabeled points out of a total %d points : %d" % (
-    X_test.shape[0], (y_test != rf.fit(X_train, y_train).predict(X_test)).sum()))
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -218,16 +213,15 @@ def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, 
 
     xgb = XGBClassifier(learning_rate=learning_rate, max_depth=max_depth, n_estimators=n_estimators)
     y_pred = xgb.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-    print("XGBoost - Number of mislabeled points out of a total %d points : %d" % (
-    X_test.shape[0], (y_test != xgb.fit(X_train, y_train).predict(X_test)).sum()))
+
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -260,16 +254,15 @@ def adaboost(df, X_cols, n_estimators = 10, plot_roc = False, plot_pr = False, s
 
     ada = AdaBoostClassifier(n_estimators=n_estimators, random_state=0)
     y_pred = ada.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-    print("Adaboost - Number of mislabeled points out of a total %d points : %d" % (
-    X_test.shape[0], (y_test != ada.fit(X_train, y_train).predict(X_test)).sum()))
+
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -303,15 +296,14 @@ def svm(df, X_cols, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False, s
     sv = SVR(C=C, epsilon=epsilon)
     y_pred = sv.fit(X_train, y_train).predict(X_test)
     y_rounded = np.array(pd.Series(y_pred).round())
-    print("SVM - Number of mislabeled points out of a total %d points : %d" % (X_test.shape[0], (y_test != y_rounded).sum()))
 
     if plot_roc:
-        tpr, fpr = roc(y_test, y_pred)
+        tpr, fpr = plot_roc(y_test, y_pred)
     else:
         fpr, tpr, roc_thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
 
     if plot_pr:
-        precision, recall = pr(y_test, y_pred)
+        precision, recall = plot_pr(y_test, y_pred)
     else:
         precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
@@ -327,7 +319,7 @@ def svm(df, X_cols, C = 0.1, epsilon = 0.1, plot_roc = False, plot_pr = False, s
 # OUTPUT
 # tpr = true positive rate
 # fpr = false postiive rate
-def roc(y_test, y_pred, plot = True):
+def plot_roc(y_test, y_pred, plot = True):
 
     fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred, pos_label=1)
     roc_auc = metrics.auc(fpr, tpr)
@@ -336,9 +328,9 @@ def roc(y_test, y_pred, plot = True):
         plt.figure()
         plt.plot(fpr, tpr, label='AUC = %0.2f' % roc_auc)
         plt.legend(loc='lower right')
-        plt.title("ROC Curve")
-        plt.xlabel("fpr")
-        plt.ylabel("tpr")
+        plt.title("ROC Curve", fontsize = 18)
+        plt.xlabel("fpr", fontsize = 18)
+        plt.ylabel("tpr", fontsize = 18)
 
     return tpr, fpr
 
@@ -350,7 +342,7 @@ def roc(y_test, y_pred, plot = True):
 # OUTPUT
 # precision
 # recall
-def pr(y_test, y_pred, plot = True):
+def plot_pr(y_test, y_pred, plot = True):
 
     precision, recall, thresholds = metrics.precision_recall_curve(y_test, y_pred)
 
