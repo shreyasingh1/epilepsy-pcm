@@ -12,7 +12,7 @@ Conclusions: Our study is the first to 1) demonstrate the direct clinical utilit
 
 ## Setup instructions
 1) git clone the repo
-2) ```cd``` into new ```epilepypcm``` directory
+2) ```cd``` into new ```epilepsypcm``` directory
 3) do ```python -m pip install -e .``` to install the epilepsypcm repo
 4) install the requirements file using the command ```pip install -r requirements.txt```
 
