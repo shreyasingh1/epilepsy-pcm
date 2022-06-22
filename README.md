@@ -14,6 +14,7 @@ Conclusions: Our study is the first to 1) demonstrate the direct clinical utilit
 1) git clone the repo
 2) ```cd``` into new ```epilepypcm``` directory
 3) do ```python -m pip install -e .``` to install the epilepsypcm repo
+4) install the requirements file using the command ```pip install -r requirements.txt```
 
 ## Using the pretrained model
 1) The pretrained random forest model can be found [here](final_random_forest.sav)
