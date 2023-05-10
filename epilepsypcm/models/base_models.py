@@ -24,6 +24,8 @@ from sklearn.svm import SVR
 from imblearn.over_sampling import SMOTE
 from imblearn.over_sampling import RandomOverSampler
 
+from sklearn.model_selection import KFold
+
 
 # Get training and testing dataframes
 # INPUT
@@ -185,6 +187,50 @@ def random_forest(df, X_cols, max_depth, plot_roc = False, plot_pr = False, smot
 
     return rf, test_channels, y_pred, y_test, tpr, fpr, roc_thresholds, precision, recall
 
+
+# Random Forest model with crossvalidation
+# INPUT
+# df = dataframe
+# X_cols = x columns to train on
+# max_depth = int, depth of random forest
+# smote, true or false
+# OUTPUT
+# rf = trained random forest model
+# test_channels
+# y_pred
+# y_test
+# tpr
+# fpr
+# roc_thresholds
+# precision
+# recall
+def random_forest_cv(df, X_cols, max_depth, plot_roc=False, plot_pr=False, smote=False):
+    X_train, X_test, y_train, y_test = get_train_test(df, X_cols, smote)
+
+    test_channels = list(X_test["Channels"])
+    X_train = X_train.drop(columns="Channels")
+    X_test = X_test.drop(columns="Channels")
+
+    X = pd.concat([X_train, X_test]).reset_index()
+    y = pd.concat([y_train, y_test]).reset_index()
+
+    rf = RandomForestClassifier(max_depth=max_depth, random_state=0)
+
+    kf = KFold(n_splits=5)
+
+    tprs = []
+    mean_fpr = np.linspace(0, 1, 100)
+
+    for train_index, test_index in kf.split(X):
+        print("TRAIN:", train_index, "TEST:", test_index)
+        X_train_cv, X_test_cv = X[train_index], X[test_index]
+        y_train_cv, y_test_cv = y[train_index], y[test_index]
+        y_pred_cv = rf.fit(X_train_cv, y_train_cv).predict_proba(X_test+cv)[:, 1]
+
+        fpr, tpr, roc_thresholds = metrics.roc_curve(y_test_cv, y_pred_cv, pos_label=1)
+        tprs.append(fpr, tpr)
+
+
 # XGBoost model
 # INPUT
 # df = dataframe
@@ -211,7 +257,7 @@ def xgboost(df, X_cols, learning_rate = 0.5, max_depth = 10, n_estimators = 10, 
     X_train = X_train.drop(columns="Channels")
     X_test = X_test.drop(columns="Channels")
 
-    xgb = XGBClassifier(learning_rate=learning_rate, max_depth=max_depth, n_estimators=n_estimators)
+    xgb = XGBClassifier(learning_rate=learning_rate, max_depth=max_depth, n_estimators=n_estimators, eval_metric='mlogloss')
     y_pred = xgb.fit(X_train, y_train).predict_proba(X_test)[:, 1]
 
 
